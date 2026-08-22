@@ -23,7 +23,7 @@
     "verify": "corepack npm run typecheck:clean && corepack npm run lint && corepack npm run build:web && corepack npm run build:worker && corepack npm test"
   },
   "dependencies": {
-    "@prisma/client": "6.12.0"
+    "@prisma/client": "7.9.1"
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
