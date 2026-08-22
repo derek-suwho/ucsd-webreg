@@ -30,6 +30,7 @@ RUN --mount=type=cache,target=/root/.npm npm ci
 
 FROM dependencies AS builder
 COPY . .
+RUN mkdir -p apps/web/public
 RUN npm run generate --workspace @webreg/db
 RUN APP_ORIGIN=https://build.invalid \
   DATABASE_URL='postgresql://build:build@database.build.invalid:5432/webreg?sslmode=require&sslaccept=strict' \
