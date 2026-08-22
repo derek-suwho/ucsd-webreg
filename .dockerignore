@@ -1,0 +1,23 @@
+.git
+.github
+.next
+**/.next
+node_modules
+**/node_modules
+dist
+**/dist
+coverage
+**/coverage
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.superpowers
+graphify-out
+archive
+docs
+sample-js
+temporary screenshots
+test-results
+playwright-report
+*.log

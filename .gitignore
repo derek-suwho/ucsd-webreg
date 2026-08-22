@@ -1,0 +1,14 @@
+archive/capture/
+node_modules/
+.env
+dist/
+.next/
+*.tsbuildinfo
+temporary screenshots/
+test-results/
+playwright-report/
+blob-report/
+graphify-out/
+sample-js/
+archive/reference/*.pdf
+archive/reference/webreg-main.js

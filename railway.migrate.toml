@@ -1,0 +1,15 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile.migrate"
+watchPatterns = [
+  "/packages/db/prisma/**",
+  "/scripts/migrate-production.mjs",
+  "/package.json",
+  "/package-lock.json",
+  "/Dockerfile.migrate",
+  "/railway.migrate.toml"
+]
+
+[deploy]
+startCommand = "node scripts/migrate-production.mjs"
+restartPolicyType = "NEVER"

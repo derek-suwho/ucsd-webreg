@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MeetingType {  // weekly meeting kinds
+  LE
+  DI
+  LA
+  SE
+  ST
+  IN
+  IT
+  FW
+  TU
+  PR
+  RE
+  OT
+}
+
+enum ExamType {  // final, midterm
+  FI
+  MI
+}
+
+model Term {
+  id        String   @id      // "FA26"
+  name      String            // "Fall Quarter 2026"
+  active    Boolean           // currently scraped?
+  startsAt  DateTime          // instruction start — calendar generation
+  endsAt    DateTime          // instruction end
+  courses   Course[]
+  schedules Schedule[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Course {
+  id          String  @id     // "FA26:CSE:110"
+  termId      String
+  term        Term    @relation(fields: [termId], references: [id])
+  subject     String          // "CSE"
+  number      String          // "110" (string: "8A", "199H")
+  title       String
+  unitsFrom   Float           // 4, or range start
+  unitsTo     Float           // = unitsFrom when fixed
+  unitsInc    Float           // step (can be 0.5)
+  restriction String[]        // restriction codes (D, ER, ...)
+  note        String?         // red course-level note from SoC
+  description String?         // optional enrich from catalog.ucsd.edu
+  sections    Section[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  @@index([termId, subject])
+}
+
+// One row per section code (A00, A01, 001...). Enrollable iff registrationNumber set.
+model Section {
+  id                 String  @id   // "FA26:CSE:110:A01"
+  courseId           String
+  course             Course  @relation(fields: [courseId], references: [id])
+  sectionCode        String        // "A00", "A01", "001"
+  familyCode         String        // "A" — lecture/discussion grouping
+  registrationNumber Int?          // 6-digit number students search by; null = not enrollable
+  instructor         String?       // null = Staff/TBA
+  capacity           Int?          // null = unlimited ("Unlim")
+  available          Int?
+  waitlisted         Int?          // populated when FULL — public after all
+  isCancelled        Boolean @default(false)
+  note               String?       // black section-level note
+  meetings           Meeting[]
+  exams              Exam[]
+  seatSnapshots      SeatSnapshot[]
+  scheduleItems      ScheduleItem[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  @@unique([courseId, sectionCode])
+  @@index([registrationNumber])
+}
+
+model Meeting {                     // weekly recurring meeting
+  id        String      @id @default(cuid())
+  sectionId String
+  section   Section     @relation(fields: [sectionId], references: [id])
+  type      MeetingType
+  days      String?               // "MWF" (null = TBA)
+  startMin  Int?                  // minutes from midnight
+  endMin    Int?
+  building  String?
+  room      String?
+}
+
+model Exam {                        // FI/MI: date-specific
+  id        String   @id @default(cuid())
+  sectionId String
+  section   Section  @relation(fields: [sectionId], references: [id])
+  type      ExamType
+  date      DateTime
+  startMin  Int
+  endMin    Int
+  building  String?               // SoC does expose exam locations
+  room      String?
+}
+
+model SeatSnapshot {                // append-only seat history
+  id         BigInt   @id @default(autoincrement())
+  sectionId  String
+  section    Section  @relation(fields: [sectionId], references: [id])
+  at         DateTime
+  available  Int?
+  waitlisted Int?
+  @@index([sectionId, at])
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique      // from Google OAuth
+  name      String?
+  schedules Schedule[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Schedule {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  termId    String
+  term      Term     @relation(fields: [termId], references: [id], onDelete: Restrict)
+  name      String                // "My Schedule", "Backup"
+  items     ScheduleItem[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([userId, termId, name])
+  @@index([termId])
+}
+
+model ScheduleItem {
+  id         String @id @default(cuid())
+  scheduleId String
+  schedule   Schedule @relation(fields: [scheduleId], references: [id])
+  sectionId  String
+  section    Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  status     String               // "planned" (only v1 value; room for more later)
+  @@unique([scheduleId, sectionId])
+  @@index([sectionId])
+}
+
+model ImportRun {
+  id          BigInt   @id @default(autoincrement())
+  termId      String
+  kind        String              // "full" | "seats"
+  startedAt   DateTime
+  finishedAt  DateTime?
+  okDepts     String[]
+  failedDepts String[]
+  error       String?
+}
+
+model CatalogSnapshot {
+  termId      String   @id
+  version     Int
+  generatedAt DateTime
+  data        Json                // the client catalog payload
+}

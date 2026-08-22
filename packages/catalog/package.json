@@ -1,0 +1,7 @@
+{
+  "name": "@webreg/catalog",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": { "cheerio": "^1.0.0", "zod": "^3.23.0", "@webreg/db": "*" }
+}

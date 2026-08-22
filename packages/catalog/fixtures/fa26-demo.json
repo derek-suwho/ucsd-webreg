@@ -1,0 +1,144 @@
+{
+  "sourceGeneratedAt": "2026-08-21T00:00:00.000Z",
+  "terms": [
+    {
+      "id": "FA26",
+      "name": "Fall Quarter 2026 Demo",
+      "startsAt": "2026-09-24",
+      "endsAt": "2026-12-04",
+      "departments": [
+        {
+          "code": "DEMO",
+          "courses": [
+            {
+              "subject": "DEMO",
+              "number": "101",
+              "title": "Patterns and Possibilities",
+              "units": { "from": 4, "to": 4, "inc": 0 },
+              "restriction": [],
+              "families": [
+                {
+                  "code": "A",
+                  "sharedMeetings": [
+                    { "sectionCode": "A00", "type": "LE", "days": "MWF", "startMin": 540, "endMin": 590, "building": "NOVA", "room": "101" }
+                  ],
+                  "sections": [
+                    {
+                      "registrationNumber": 900101,
+                      "sectionCode": "A01",
+                      "instructors": ["Mira Vale"],
+                      "available": 12,
+                      "capacity": 30,
+                      "waitlisted": null,
+                      "cancelled": false,
+                      "meetings": [
+                        { "type": "DI", "days": "Tu", "startMin": 600, "endMin": 650, "building": "NOVA", "room": "115" }
+                      ]
+                    },
+                    {
+                      "registrationNumber": 900102,
+                      "sectionCode": "A02",
+                      "instructors": ["Orin Lark"],
+                      "available": 0,
+                      "capacity": 25,
+                      "waitlisted": 4,
+                      "cancelled": false,
+                      "meetings": [
+                        { "type": "DI", "days": "Th", "startMin": 600, "endMin": 650, "building": "NOVA", "room": "116" }
+                      ]
+                    }
+                  ],
+                  "exams": [
+                    { "type": "FI", "date": "2026-12-08", "startMin": 540, "endMin": 720, "building": "NOVA", "room": "101" }
+                  ]
+                }
+              ]
+            },
+            {
+              "subject": "DEMO",
+              "number": "280",
+              "title": "Independent Studio Topics",
+              "units": { "from": 1, "to": 4, "inc": 1 },
+              "restriction": [],
+              "families": [
+                {
+                  "code": "C",
+                  "sharedMeetings": [],
+                  "sections": [
+                    {
+                      "registrationNumber": 900103,
+                      "sectionCode": "C01",
+                      "instructors": ["Sela Wynn"],
+                      "available": null,
+                      "capacity": null,
+                      "waitlisted": null,
+                      "cancelled": false,
+                      "meetings": [
+                        { "type": "LE", "days": null, "startMin": null, "endMin": null, "building": null, "room": null }
+                      ]
+                    }
+                  ],
+                  "exams": []
+                },
+                {
+                  "code": "D",
+                  "sharedMeetings": [],
+                  "sections": [
+                    {
+                      "registrationNumber": 900104,
+                      "sectionCode": "D01",
+                      "instructors": ["Nico Fern"],
+                      "available": 8,
+                      "capacity": 20,
+                      "waitlisted": null,
+                      "cancelled": true,
+                      "meetings": [
+                        { "type": "LE", "days": "F", "startMin": 780, "endMin": 900, "building": "MESA", "room": "040" }
+                      ]
+                    }
+                  ],
+                  "exams": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "LABX",
+          "courses": [
+            {
+              "subject": "LABX",
+              "number": "150",
+              "title": "Creative Systems Lab",
+              "units": { "from": 2, "to": 2, "inc": 0 },
+              "restriction": [],
+              "families": [
+                {
+                  "code": "A",
+                  "sharedMeetings": [],
+                  "sections": [
+                    {
+                      "registrationNumber": 900201,
+                      "sectionCode": "A01",
+                      "instructors": ["Tavi Bloom"],
+                      "available": 2,
+                      "capacity": 10,
+                      "waitlisted": null,
+                      "cancelled": false,
+                      "meetings": [
+                        { "type": "LA", "days": "MWF", "startMin": 570, "endMin": 630, "building": "MESA", "room": "210" }
+                      ]
+                    }
+                  ],
+                  "exams": [
+                    { "type": "FI", "date": "2026-12-08", "startMin": 660, "endMin": 780, "building": "MESA", "room": "210" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

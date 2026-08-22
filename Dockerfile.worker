@@ -1,0 +1,54 @@
+# syntax=docker/dockerfile:1.7
+
+ARG NODE_IMAGE=node:24-bookworm-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03
+ARG NPM_VERSION=11.18.0
+
+FROM ${NODE_IMAGE} AS base
+RUN apt-get update \
+  && apt-get install --yes --no-install-recommends \
+    ca-certificates=20250419~deb12u1 \
+    libssl3=3.0.20-1~deb12u2 \
+    openssl=3.0.20-1~deb12u2 \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+
+FROM base AS build-base
+ARG NPM_VERSION
+RUN npm install --global --no-audit --no-fund "npm@${NPM_VERSION}"
+
+FROM build-base AS dependencies
+COPY package.json package-lock.json ./
+COPY apps/web/package.json apps/web/package.json
+COPY apps/worker/package.json apps/worker/package.json
+COPY packages/catalog/package.json packages/catalog/package.json
+COPY packages/config/package.json packages/config/package.json
+COPY packages/db/package.json packages/db/package.json
+COPY packages/planner/package.json packages/planner/package.json
+COPY packages/search/package.json packages/search/package.json
+RUN --mount=type=cache,target=/root/.npm npm ci
+
+FROM dependencies AS builder
+COPY . .
+RUN npm run build:worker
+
+FROM build-base AS production-dependencies
+COPY package.json package-lock.json ./
+COPY apps/web/package.json apps/web/package.json
+COPY apps/worker/package.json apps/worker/package.json
+COPY packages/catalog/package.json packages/catalog/package.json
+COPY packages/config/package.json packages/config/package.json
+COPY packages/db/package.json packages/db/package.json
+COPY packages/planner/package.json packages/planner/package.json
+COPY packages/search/package.json packages/search/package.json
+RUN --mount=type=cache,target=/root/.npm \
+  npm ci --omit=dev --ignore-scripts --workspace @webreg/worker --include-workspace-root=false
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+FROM base AS runtime
+ENV NODE_ENV=production
+COPY --from=production-dependencies /app/node_modules ./node_modules
+COPY --from=builder /app/apps/worker/dist ./apps/worker/dist
+COPY apps/worker/package.json ./apps/worker/package.json
+USER node
+HEALTHCHECK NONE
+CMD ["node", "apps/worker/dist/index.js"]

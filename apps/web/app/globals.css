@@ -1,0 +1,574 @@
+@import "tailwindcss";
+
+:root {
+  /* ============================================================
+     Classic WebReg tokens — see legacy-ui-spec.md §1 for sourcing.
+     Names follow the spec verbatim so future restyle passes can
+     cross-reference directly.
+     ============================================================ */
+
+  /* --- 1.3 UCSD brand band --- */
+  --color-wr-header-band: #2e648d;
+  --color-wr-header-text: #ffffff;
+  --color-wr-header-accent: #ffcd00;
+
+  /* --- reference-image-spec.md §1 pixel-sampled tokens --- */
+  --color-wr-band-from: #2e648d;
+  --color-wr-band-to: #366e97;
+  --color-wr-tabbar: #204963;
+  --color-wr-orange: #b65d10;
+  --color-wr-link: #003e8a;
+  --color-wr-tab-from: #cdd6dd;
+  --color-wr-tab-to: #becbd1;
+  --color-wr-tab-text: #16365c;
+  --color-wr-th-from: #e8e8e8;
+  --color-wr-th-to: #d7d7d7;
+  --color-wr-th-border: #c8c8c8;
+
+  /* --- 1.1 Pager (verified literal values) --- */
+  --color-wr-pager-bg: #0b4a67;
+  --color-wr-pager-text: #ffffff;
+  --color-wr-pager-border: #ffffff;
+  --color-wr-pager-hover-bg: #ffffff;
+  --color-wr-pager-hover-text: #000000;
+  --color-wr-pager-hover-border: #cccccc;
+
+  /* --- 1.2 jQuery UI "Smoothness" chrome --- */
+  --color-wr-ui-header-bg-from: #e6e6e6;
+  --color-wr-ui-header-bg-to: #dcdcdc;
+  --color-wr-ui-header-text: #000000;
+  --color-wr-ui-header-border: #d3d3d3;
+  --color-wr-ui-default-text: #16365c;
+  --color-wr-ui-default-border: #a8b4bc;
+  --color-wr-ui-hover-bg-from: #f6f6f6;
+  --color-wr-ui-hover-bg-to: #ececec;
+  --color-wr-ui-hover-text: #212121;
+  --color-wr-ui-hover-border: #cccccc;
+  --color-wr-ui-active-bg: #ffffff;
+  --color-wr-ui-active-text: #212121;
+  --color-wr-ui-highlight-bg: #fbf9ee;
+  --color-wr-ui-highlight-border: #fcefa1;
+  --color-wr-ui-highlight-text: #363636;
+  --color-wr-ui-error-bg: #fef1ec;
+  --color-wr-ui-error-border: #cd0a0a;
+  --color-wr-ui-error-text: #cd0a0a;
+  --color-wr-ui-content-bg: #ffffff;
+  --color-wr-ui-content-border: #b9cddd;
+  --radius-wr-corner: 4px;
+  --shadow-wr-dialog: 0 0 12px rgba(0, 0, 0, 0.3);
+  --shadow-wr-overlay: rgba(0, 0, 0, 0.3);
+
+  /* --- 1.4 Grid / table --- */
+  --color-wr-grid-border: #c8c8c8;
+  --color-wr-row: #ffffff;
+  --color-wr-row-alt: #f5f7f9;
+  --color-wr-row-hover: #fbf9ee;
+  --font-size-wr-grid: 11px;
+  --font-size-wr-grid-header: 11px;
+  --space-wr-cell-x: 4px;
+  --space-wr-cell-y: 2px;
+
+  /* --- 1.5 Status semantics --- */
+  --color-wr-status-enrolled: #2e7d32;
+  --color-wr-status-enrolled-bg: #e8f5e9;
+  --color-wr-status-waitlist: #b8600a;
+  --color-wr-status-waitlist-bg: #fdecd3;
+  --color-wr-status-planned: #2a5480;
+  --color-wr-status-planned-bg: #e6edf4;
+  --color-wr-status-event: #5b3f7a;
+  --color-wr-status-event-bg: #ece5f3;
+  --color-wr-status-cancelled: #6b6459;
+  --color-wr-status-cancelled-bg: #ece8de;
+  --color-wr-conflict: #cd0a0a;
+
+  /* --- 1.6 FullCalendar v1 chrome --- */
+  --color-wr-fc-event-bg: #3366cc;
+  --color-wr-fc-event-border: #3366cc;
+  --color-wr-fc-event-text: #ffffff;
+  --color-wr-fc-today-bg: #fbf9ee;
+  --color-wr-fc-grid-border: #dddddd;
+  --color-wr-fc-axis-text: #555555;
+
+  /* --- 1.7 Typography --- */
+  --font-wr-ui: Arial, Helvetica, sans-serif;
+  --font-size-wr-base: 13px;
+  --font-size-wr-small: 11px;
+  --font-size-wr-heading: 14px;
+  --font-size-wr-page-title: 18px;
+  --leading-wr-base: 1.3;
+
+  /* --- 1.1 Icon assets (referenced by URL, not Tailwind theme colors) --- */
+  --icon-wr-book: url("/webreg2/resources/images/book.gif");
+  --icon-wr-email: url("/webreg2/resources/images/email_12.png");
+  --icon-wr-info: url("/webreg2/resources/images/info.png");
+
+  /* ============================================================
+     App-wide semantic tokens — remapped onto the legacy values
+     above so components that haven't been individually restyled
+     yet still shift toward the classic look immediately.
+     ============================================================ */
+  --background: #ffffff;
+  --foreground: #3d3d3d;
+
+  /* Navy ramp — anchored on the confirmed/assumed legacy blues */
+  --color-navy-950: #003c71;
+  --color-navy-900: #0b4a67;
+  --color-navy-800: #2a5480;
+  --color-navy-700: #326690;
+  --color-navy-600: #3366cc;
+  --color-navy-500: #5586ac;
+  --color-navy-400: #7ba3c2;
+  --color-navy-200: #b9cddd;
+  --color-navy-100: #e6edf4;
+  --color-navy-50: #f0f5f9;
+
+  /* Gold ramp — anchored on the UCSD gold accent */
+  --color-gold-700: #8a6a00;
+  --color-gold-600: #b38f00;
+  --color-gold-500: #d9b300;
+  --color-gold-400: #ffcd00;
+  --color-gold-200: #ffe680;
+  --color-gold-100: #fff6d1;
+
+  /* Semantic seat states — mapped onto legacy status/error tokens */
+  --color-seat-open: var(--color-wr-status-enrolled);
+  --color-seat-open-bg: var(--color-wr-status-enrolled-bg);
+  --color-seat-full: var(--color-wr-ui-error-text);
+  --color-seat-full-bg: var(--color-wr-ui-error-bg);
+  --color-seat-unlim: var(--color-wr-status-planned);
+  --color-seat-unlim-bg: var(--color-wr-status-planned-bg);
+  --color-seat-cancelled: var(--color-wr-status-cancelled);
+  --color-seat-cancelled-bg: var(--color-wr-status-cancelled-bg);
+
+  --color-paper: var(--color-wr-ui-content-bg);
+  --color-paper-raised: var(--color-wr-ui-content-bg);
+  --color-ink: var(--foreground);
+  --color-ink-muted: var(--color-wr-ui-default-text);
+
+  /* Danger — conflicts (alias of the legacy error/conflict tokens) */
+  --color-danger: var(--color-wr-conflict);
+  --color-danger-bg: var(--color-wr-ui-error-bg);
+
+  /* Calendar block palette — cycles per course, kept distinct from
+     the status palette above per legacy-ui-spec.md §3.5 (color-by-
+     course is recommended to stay, not revert to color-by-status). */
+  --color-block-1: #1f6f68;
+  --color-block-1-bg: #e0f0ee;
+  --color-block-2: #5b3f7a;
+  --color-block-2-bg: #ece5f3;
+  --color-block-3: #5f6b1f;
+  --color-block-3-bg: #eef1df;
+  --color-block-4: #7a4a2a;
+  --color-block-4-bg: #f2e7dc;
+  --color-block-5: #35617a;
+  --color-block-5-bg: #e3edf2;
+
+  /* Fonts — legacy ships one plain UI stack, no display/body pairing */
+  --font-sans: var(--font-wr-ui);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+
+  --color-wr-header-band: var(--color-wr-header-band);
+  --color-wr-header-text: var(--color-wr-header-text);
+  --color-wr-header-accent: var(--color-wr-header-accent);
+
+  --color-wr-band-from: var(--color-wr-band-from);
+  --color-wr-band-to: var(--color-wr-band-to);
+  --color-wr-tabbar: var(--color-wr-tabbar);
+  --color-wr-orange: var(--color-wr-orange);
+  --color-wr-link: var(--color-wr-link);
+  --color-wr-tab-from: var(--color-wr-tab-from);
+  --color-wr-tab-to: var(--color-wr-tab-to);
+  --color-wr-tab-text: var(--color-wr-tab-text);
+  --color-wr-th-from: var(--color-wr-th-from);
+  --color-wr-th-to: var(--color-wr-th-to);
+  --color-wr-th-border: var(--color-wr-th-border);
+
+  --color-wr-pager-bg: var(--color-wr-pager-bg);
+  --color-wr-pager-text: var(--color-wr-pager-text);
+  --color-wr-pager-border: var(--color-wr-pager-border);
+  --color-wr-pager-hover-bg: var(--color-wr-pager-hover-bg);
+  --color-wr-pager-hover-text: var(--color-wr-pager-hover-text);
+  --color-wr-pager-hover-border: var(--color-wr-pager-hover-border);
+
+  --color-wr-ui-header-bg-from: var(--color-wr-ui-header-bg-from);
+  --color-wr-ui-header-bg-to: var(--color-wr-ui-header-bg-to);
+  --color-wr-ui-header-text: var(--color-wr-ui-header-text);
+  --color-wr-ui-header-border: var(--color-wr-ui-header-border);
+  --color-wr-ui-default-text: var(--color-wr-ui-default-text);
+  --color-wr-ui-default-border: var(--color-wr-ui-default-border);
+  --color-wr-ui-hover-bg-from: var(--color-wr-ui-hover-bg-from);
+  --color-wr-ui-hover-bg-to: var(--color-wr-ui-hover-bg-to);
+  --color-wr-ui-hover-text: var(--color-wr-ui-hover-text);
+  --color-wr-ui-hover-border: var(--color-wr-ui-hover-border);
+  --color-wr-ui-active-bg: var(--color-wr-ui-active-bg);
+  --color-wr-ui-active-text: var(--color-wr-ui-active-text);
+  --color-wr-ui-highlight-bg: var(--color-wr-ui-highlight-bg);
+  --color-wr-ui-highlight-border: var(--color-wr-ui-highlight-border);
+  --color-wr-ui-highlight-text: var(--color-wr-ui-highlight-text);
+  --color-wr-ui-error-bg: var(--color-wr-ui-error-bg);
+  --color-wr-ui-error-border: var(--color-wr-ui-error-border);
+  --color-wr-ui-error-text: var(--color-wr-ui-error-text);
+  --color-wr-ui-content-bg: var(--color-wr-ui-content-bg);
+  --color-wr-ui-content-border: var(--color-wr-ui-content-border);
+  --radius-wr-corner: var(--radius-wr-corner);
+  --shadow-wr-dialog: var(--shadow-wr-dialog);
+  --shadow-wr-overlay: var(--shadow-wr-overlay);
+
+  --color-wr-grid-border: var(--color-wr-grid-border);
+  --color-wr-row: var(--color-wr-row);
+  --color-wr-row-alt: var(--color-wr-row-alt);
+  --color-wr-row-hover: var(--color-wr-row-hover);
+  --font-size-wr-grid: var(--font-size-wr-grid);
+  --font-size-wr-grid-header: var(--font-size-wr-grid-header);
+  --space-wr-cell-x: var(--space-wr-cell-x);
+  --space-wr-cell-y: var(--space-wr-cell-y);
+
+  --color-wr-status-enrolled: var(--color-wr-status-enrolled);
+  --color-wr-status-enrolled-bg: var(--color-wr-status-enrolled-bg);
+  --color-wr-status-waitlist: var(--color-wr-status-waitlist);
+  --color-wr-status-waitlist-bg: var(--color-wr-status-waitlist-bg);
+  --color-wr-status-planned: var(--color-wr-status-planned);
+  --color-wr-status-planned-bg: var(--color-wr-status-planned-bg);
+  --color-wr-status-event: var(--color-wr-status-event);
+  --color-wr-status-event-bg: var(--color-wr-status-event-bg);
+  --color-wr-status-cancelled: var(--color-wr-status-cancelled);
+  --color-wr-status-cancelled-bg: var(--color-wr-status-cancelled-bg);
+  --color-wr-conflict: var(--color-wr-conflict);
+
+  --color-wr-fc-event-bg: var(--color-wr-fc-event-bg);
+  --color-wr-fc-event-border: var(--color-wr-fc-event-border);
+  --color-wr-fc-event-text: var(--color-wr-fc-event-text);
+  --color-wr-fc-today-bg: var(--color-wr-fc-today-bg);
+  --color-wr-fc-grid-border: var(--color-wr-fc-grid-border);
+  --color-wr-fc-axis-text: var(--color-wr-fc-axis-text);
+
+  --font-wr-ui: var(--font-wr-ui);
+  --font-size-wr-base: var(--font-size-wr-base);
+  --font-size-wr-small: var(--font-size-wr-small);
+  --font-size-wr-heading: var(--font-size-wr-heading);
+  --font-size-wr-page-title: var(--font-size-wr-page-title);
+  --leading-wr-base: var(--leading-wr-base);
+
+  --color-navy-950: var(--color-navy-950);
+  --color-navy-900: var(--color-navy-900);
+  --color-navy-800: var(--color-navy-800);
+  --color-navy-700: var(--color-navy-700);
+  --color-navy-600: var(--color-navy-600);
+  --color-navy-500: var(--color-navy-500);
+  --color-navy-400: var(--color-navy-400);
+  --color-navy-200: var(--color-navy-200);
+  --color-navy-100: var(--color-navy-100);
+  --color-navy-50: var(--color-navy-50);
+
+  --color-gold-700: var(--color-gold-700);
+  --color-gold-600: var(--color-gold-600);
+  --color-gold-500: var(--color-gold-500);
+  --color-gold-400: var(--color-gold-400);
+  --color-gold-200: var(--color-gold-200);
+  --color-gold-100: var(--color-gold-100);
+
+  --color-seat-open: var(--color-seat-open);
+  --color-seat-open-bg: var(--color-seat-open-bg);
+  --color-seat-full: var(--color-seat-full);
+  --color-seat-full-bg: var(--color-seat-full-bg);
+  --color-seat-unlim: var(--color-seat-unlim);
+  --color-seat-unlim-bg: var(--color-seat-unlim-bg);
+  --color-seat-cancelled: var(--color-seat-cancelled);
+  --color-seat-cancelled-bg: var(--color-seat-cancelled-bg);
+
+  --color-paper: var(--color-paper);
+  --color-paper-raised: var(--color-paper-raised);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+
+  --color-danger: var(--color-danger);
+  --color-danger-bg: var(--color-danger-bg);
+
+  --color-block-1: var(--color-block-1);
+  --color-block-1-bg: var(--color-block-1-bg);
+  --color-block-2: var(--color-block-2);
+  --color-block-2-bg: var(--color-block-2-bg);
+  --color-block-3: var(--color-block-3);
+  --color-block-3-bg: var(--color-block-3-bg);
+  --color-block-4: var(--color-block-4);
+  --color-block-4-bg: var(--color-block-4-bg);
+  --color-block-5: var(--color-block-5);
+  --color-block-5-bg: var(--color-block-5-bg);
+}
+
+/* Legacy WebReg had no dark theme — the classic light theme is canonical. */
+
+body {
+  background: var(--color-paper);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: var(--font-size-wr-base);
+  line-height: var(--leading-wr-base);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-weight: 700;
+}
+
+/* ============================================================
+   Shared legacy UI utilities — jQuery-UI "Smoothness" button and
+   panel chrome, reused across dialogs, grids, and the header band.
+   ============================================================ */
+
+/* .wr-btn — native-like Search button (reference-image-spec.md §2.6). Hover/active
+   scale is a modern micro-interaction kept as a deliberate non-legacy touch, baked
+   in here once so every caller gets it uniformly instead of re-pasting the same
+   three Tailwind utilities at every call site. Colors are literal (not
+   var(--color-wr-ui-default-*)) — those tokens now drive the inactive tab
+   gradient (spec §2.8), so .wr-btn needs its own palette to avoid inheriting it. */
+.wr-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  border: 1px solid #b5b5b5;
+  border-radius: var(--radius-wr-corner);
+  background: linear-gradient(to bottom, #fdfdfd, #f0f0f0);
+  color: #222222;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-wr-base);
+  line-height: var(--leading-wr-base);
+  padding: 3px 14px;
+  cursor: pointer;
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wr-btn:hover {
+  border-color: #999999;
+  background: linear-gradient(to bottom, #ffffff, #e8e8e8);
+  color: #000000;
+  transform: scale(1.02);
+}
+
+.wr-btn:active {
+  background: #e8e8e8;
+  color: #000000;
+  transform: scale(0.98);
+}
+
+/* Two-tier focus-ring convention (intentional, not accidental): plain interactive
+   text/controls (search input, tabs, accordion headers) get a 1px dotted ring in
+   the current foreground/header-band color; anything built on .wr-btn or the
+   dialog-close X gets a bolder 2px solid gold ring so primary actions stand out. */
+.wr-btn:focus-visible {
+  outline: 2px solid var(--color-wr-header-accent);
+  outline-offset: 2px;
+}
+
+.wr-btn:disabled {
+  cursor: not-allowed;
+  color: #b5b5b5;
+  background: #f0f0f0;
+}
+
+/* .wr-btn-success — semantic "already planned" variant of .wr-btn (CourseAccordion's
+   green "Planned ✓" pill). Recolors the same button chrome instead of hand-rolling a
+   third bespoke button skin. */
+.wr-btn-success {
+  border-color: color-mix(in srgb, var(--color-seat-open) 40%, transparent);
+  background: var(--color-seat-open-bg);
+  color: var(--color-seat-open);
+}
+
+.wr-btn-success:hover,
+.wr-btn-success:active {
+  border-color: color-mix(in srgb, var(--color-seat-open) 40%, transparent);
+  background: var(--color-seat-open-bg);
+  color: var(--color-seat-open);
+  filter: brightness(0.95);
+}
+
+/* .wr-dialog-close — jQuery UI dialog titlebar close X (spec §3.7), shared by
+   ConfirmPlanDialog and ImportGuestDialog instead of a pasted ~250-char className. */
+.wr-dialog-close {
+  display: flex;
+  height: 1.25rem;
+  width: 1.25rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-wr-corner);
+  line-height: 1;
+  color: var(--color-wr-ui-header-text);
+  transition: transform 150ms cubic-bezier(0.4, 0, 0.2, 1), background-color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.wr-dialog-close:hover {
+  background: var(--color-wr-ui-hover-bg-to);
+  transform: scale(1.05);
+}
+
+.wr-dialog-close:active {
+  transform: scale(0.95);
+}
+
+.wr-dialog-close:focus-visible {
+  outline: 2px solid var(--color-wr-header-accent);
+}
+
+/* .wr-panel — content-colored surface for dialogs / fused tab panels */
+.wr-panel {
+  background: var(--color-wr-ui-content-bg);
+  border: 1px solid var(--color-wr-ui-content-border);
+  border-radius: var(--radius-wr-corner);
+  color: var(--foreground);
+}
+
+/* .wr-grid-header — jqGrid column header / caption chrome. Uses the same
+   --color-wr-th-* family as ListView/ConfirmPlanDialog/SearchPane's inline
+   header gradients (reference-image-spec.md §1) instead of a byte-identical
+   duplicate token set, so there's one canonical header-gradient system. */
+.wr-grid-header {
+  background: linear-gradient(to bottom, var(--color-wr-th-from), var(--color-wr-th-to));
+  border: 1px solid var(--color-wr-th-border);
+  color: var(--color-wr-ui-header-text);
+  font-size: var(--font-size-wr-grid-header);
+  font-weight: 700;
+  padding: var(--space-wr-cell-y) var(--space-wr-cell-x);
+}
+
+.print-only {
+  display: none;
+}
+
+#main-content,
+.planner-content {
+  min-width: 0;
+}
+
+@media (max-width: 767px) {
+  .planner-title-row {
+    align-items: stretch;
+  }
+
+  .planner-title-row > div,
+  .planner-term-select {
+    width: 100%;
+  }
+
+  .planner-schedule-actions {
+    justify-content: flex-start;
+  }
+
+  [data-schedule-controls] {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  [data-schedule-controls] select {
+    width: 100%;
+  }
+
+  #wr-search-input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 1023px) {
+  .planner-scroll-controls {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@page {
+  margin: 12mm;
+}
+
+@media print {
+  body {
+    background: #ffffff;
+    color: #222222;
+    font-size: 10pt;
+  }
+
+  .shell-header,
+  .shell-banner,
+  .shell-footer,
+  .planner-print-hidden,
+  .planner-search,
+  .planner-schedule-actions,
+  .planner-tab-strip,
+  .planner-scroll-controls,
+  body > a[href="#main-content"] {
+    display: none !important;
+  }
+
+  .print-only {
+    display: block !important;
+    margin-bottom: 8mm;
+    border-bottom: 1px solid #777777;
+    padding-bottom: 4mm;
+  }
+
+  .print-only h1 {
+    margin-bottom: 2mm;
+    font-size: 18pt;
+  }
+
+  .print-only button {
+    display: none !important;
+  }
+
+  .planner-content {
+    max-width: none;
+    padding: 0;
+  }
+
+  #tabpanel-list {
+    display: block !important;
+  }
+
+  #tabpanel-calendar,
+  #tabpanel-finals {
+    display: none !important;
+  }
+
+  .planner-list-panel,
+  .planner-list-panel .overflow-x-auto {
+    overflow: visible !important;
+  }
+
+  .planner-list-panel button {
+    display: none !important;
+  }
+
+  .planner-list-panel > p,
+  .planner-list-panel [data-print-action] {
+    display: none !important;
+  }
+
+  .planner-list-panel [data-sticky-identity] {
+    position: static !important;
+  }
+
+  .planner-list-panel table {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .planner-list-panel tr {
+    break-inside: avoid;
+  }
+}

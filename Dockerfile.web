@@ -1,0 +1,54 @@
+# syntax=docker/dockerfile:1.7
+
+ARG NODE_IMAGE=node:24-bookworm-slim@sha256:3638d9a6fe4030bd716be989438248074489337ba3275657f93595428be4fc03
+ARG NPM_VERSION=11.18.0
+
+FROM ${NODE_IMAGE} AS base
+RUN apt-get update \
+  && apt-get install --yes --no-install-recommends \
+    ca-certificates=20250419~deb12u1 \
+    libssl3=3.0.20-1~deb12u2 \
+    openssl=3.0.20-1~deb12u2 \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+
+FROM base AS build-base
+ARG NPM_VERSION
+RUN npm install --global --no-audit --no-fund "npm@${NPM_VERSION}"
+
+FROM build-base AS dependencies
+COPY package.json package-lock.json ./
+COPY apps/web/package.json apps/web/package.json
+COPY apps/worker/package.json apps/worker/package.json
+COPY packages/catalog/package.json packages/catalog/package.json
+COPY packages/config/package.json packages/config/package.json
+COPY packages/db/package.json packages/db/package.json
+COPY packages/planner/package.json packages/planner/package.json
+COPY packages/search/package.json packages/search/package.json
+RUN --mount=type=cache,target=/root/.npm npm ci
+
+FROM dependencies AS builder
+COPY . .
+RUN npm run generate --workspace @webreg/db
+RUN APP_ORIGIN=https://build.invalid \
+  DATABASE_URL='postgresql://build:build@database.build.invalid:5432/webreg?sslmode=require&sslaccept=strict' \
+  NEXTAUTH_SECRET=build-only-not-a-runtime-secret-000 \
+  GOOGLE_CLIENT_ID=build-only-client \
+  GOOGLE_CLIENT_SECRET=build-only-client-secret \
+  REDIS_URL=rediss://build.invalid \
+  TRUSTED_PROXY_HOPS=1 \
+  npm run build:web
+
+FROM base AS runtime
+ENV NODE_ENV=production \
+  HOSTNAME=0.0.0.0 \
+  PORT=3000
+COPY --from=builder /app/apps/web/.next/standalone ./
+COPY --from=builder /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder /app/apps/web/public ./apps/web/public
+USER node
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
+  CMD ["node", "-e", "fetch('http://127.0.0.1:'+(process.env.PORT||'3000')+'/api/live',{signal:AbortSignal.timeout(2000)}).then(response=>{if(!response.ok)throw new Error()}).catch(()=>process.exit(1))"]
+CMD ["node", "apps/web/server.js"]

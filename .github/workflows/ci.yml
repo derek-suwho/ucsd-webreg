@@ -1,0 +1,267 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Node ${{ matrix.node-version }} release gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [22, 24]
+    services:
+      postgres:
+        image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+        env:
+          POSTGRES_USER: webreg_ci
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: webreg_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U webreg_ci -d webreg_ci"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+      redis:
+        image: redis:7-alpine@sha256:ee9e8748ace004102a267f7b8265dab2c618317df22507b89d16a8add7154273
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgresql://webreg_ci:ci-only-password@127.0.0.1:5432/webreg_ci
+      REDIS_URL: redis://127.0.0.1:6379
+      CONTACT_EMAIL: planner-ci@example.test
+      CATALOG_SOURCE: fixture
+      APP_ORIGIN: https://planner.example.test
+      AUTH_URL: https://planner.example.test
+      NEXTAUTH_SECRET: ci-only-nextauth-secret-0123456789abcdef
+      GOOGLE_CLIENT_ID: ci-only-client
+      GOOGLE_CLIENT_SECRET: ci-only-secret
+      TRUSTED_PROXY_HOPS: "1"
+      ENABLE_HSTS: "true"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - name: Activate declared npm
+        run: |
+          corepack enable
+          test "$(corepack npm --version)" = "11.18.0"
+      - name: Install dependencies
+        run: corepack npm ci
+      - name: Generate Prisma Client
+        run: corepack npm run generate --workspace @webreg/db
+      - name: Apply migrations
+        run: corepack npm exec -- prisma migrate deploy --schema packages/db/prisma/schema.prisma
+      - name: Verify service connections
+        run: corepack npm run verify:ci-services
+      - name: Verify CI contract
+        run: corepack npm run verify:ci-workflow
+      - name: Seed demo catalog
+        run: corepack npm run seed:demo
+      - name: Run full database test suite
+        run: corepack npm run test:ci
+      - name: Run clean TypeScript build
+        run: corepack npm run typecheck:clean
+      - name: Lint without warnings
+        run: corepack npm run lint:ci
+      - name: Build web application
+        env:
+          DATABASE_URL: postgresql://build:build@db.invalid/build?sslmode=require&sslaccept=strict
+          REDIS_URL: rediss://redis.example.test:6379
+        run: corepack npm run build:web
+      - name: Build worker
+        run: corepack npm run build:worker
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          tools: linked
+      - name: Analyze JavaScript and TypeScript
+        uses: github/codeql-action/analyze@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4.37.8
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: low
+          fail-on-scopes: runtime
+          comment-summary-in-pr: never
+
+  images:
+    name: Production images
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    env:
+      DOCKER_BUILDKIT: "1"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build production images
+        run: |
+          set -euo pipefail
+          docker build --file Dockerfile.web --tag webreg-web:ci .
+          docker build --file Dockerfile.worker --tag webreg-worker:ci .
+          docker build --file Dockerfile.migrate --tag webreg-migrate:ci .
+      - name: Verify image runtime metadata
+        run: |
+          set -euo pipefail
+          test "$(docker image inspect --format '{{.Config.User}}' webreg-web:ci)" = node
+          test "$(docker image inspect --format '{{.Config.User}}' webreg-worker:ci)" = node
+          test "$(docker image inspect --format '{{.Config.User}}' webreg-migrate:ci)" = node
+          test "$(docker image inspect --format '{{len .Config.Healthcheck.Test}}' webreg-web:ci)" = 4
+          test "$(docker image inspect --format '{{index .Config.Healthcheck.Test 0}}' webreg-web:ci)" = CMD
+          test "$(docker image inspect --format '{{index .Config.Healthcheck.Test 1}}' webreg-web:ci)" = node
+          test "$(docker image inspect --format '{{index .Config.Healthcheck.Test 2}}' webreg-web:ci)" = -e
+          test "$(docker image inspect --format '{{index .Config.Healthcheck.Test 3}}' webreg-web:ci)" = "fetch('http://127.0.0.1:'+(process.env.PORT||'3000')+'/api/live',{signal:AbortSignal.timeout(2000)}).then(response=>{if(!response.ok)throw new Error()}).catch(()=>process.exit(1))"
+          test "$(docker image inspect --format '{{json .Config.Healthcheck.Interval}}' webreg-web:ci)" = 30000000000
+          test "$(docker image inspect --format '{{json .Config.Healthcheck.Timeout}}' webreg-web:ci)" = 3000000000
+          test "$(docker image inspect --format '{{json .Config.Healthcheck.StartPeriod}}' webreg-web:ci)" = 15000000000
+          test "$(docker image inspect --format '{{json .Config.Healthcheck.Retries}}' webreg-web:ci)" = 3
+          test "$(docker image inspect --format '{{json .Config.Healthcheck.Test}}' webreg-worker:ci)" = '["NONE"]'
+          test "$(docker image inspect --format '{{json .Config.Healthcheck.Test}}' webreg-migrate:ci)" = '["NONE"]'
+          test "$(docker image inspect --format '{{json .Config.Cmd}}' webreg-web:ci)" = '["node","apps/web/server.js"]'
+          test "$(docker image inspect --format '{{json .Config.Cmd}}' webreg-worker:ci)" = '["node","apps/worker/dist/index.js"]'
+          test "$(docker image inspect --format '{{json .Config.Cmd}}' webreg-migrate:ci)" = '["node","scripts/migrate-production.mjs"]'
+
+  e2e:
+    name: Chromium E2E
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+        env:
+          POSTGRES_USER: webreg_e2e
+          POSTGRES_PASSWORD: e2e-only-password
+          POSTGRES_DB: webreg_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U webreg_e2e -d webreg_e2e"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
+    env:
+      TEST_DATABASE_URL: postgresql://webreg_e2e:e2e-only-password@127.0.0.1:5432/webreg_e2e
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Activate declared npm
+        run: |
+          corepack enable
+          test "$(corepack npm --version)" = "11.18.0"
+      - name: Install dependencies
+        run: corepack npm ci
+      - name: Generate Prisma Client
+        run: corepack npm run generate --workspace @webreg/db
+      - name: Install Chromium
+        run: corepack npm exec --workspace @webreg/web -- playwright install --with-deps chromium
+      - name: Run browser tests
+        run: corepack npm run e2e --workspace @webreg/web
+      - name: Upload browser failure evidence
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-failure-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            apps/web/test-results/
+            apps/web/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  supply-chain:
+    name: Supply-chain checks
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Node 24
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Activate declared npm
+        run: |
+          corepack enable
+          test "$(corepack npm --version)" = "11.18.0"
+      - name: Audit production dependencies
+        run: corepack npm audit --omit=dev
+      - name: Scan current tree for secrets
+        env:
+          GITLEAKS_VERSION: 8.30.1
+          GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+        run: |
+          set -euo pipefail
+          archive="/tmp/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl --proto '=https' --tlsv1.2 --fail --location --silent --show-error \
+            --output "$archive" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          printf '%s  %s\n' "$GITLEAKS_SHA256" "$archive" | sha256sum --check
+          tar -xzf "$archive" -C /tmp gitleaks
+          scan_root="$(mktemp -d)"
+          git archive --format=tar HEAD | tar -xf - -C "$scan_root"
+          /tmp/gitleaks detect --source "$scan_root" --no-git --redact --exit-code 1
