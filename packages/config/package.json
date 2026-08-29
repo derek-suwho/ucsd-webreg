@@ -3,5 +3,5 @@
   "version": "0.0.0",
   "type": "module",
   "main": "src/env.ts",
-  "dependencies": { "zod": "^3.23.0" }
+  "dependencies": { "zod": "^4.4.3" }
 }
